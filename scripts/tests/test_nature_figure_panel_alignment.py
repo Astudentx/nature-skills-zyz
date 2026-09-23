@@ -492,7 +492,7 @@ class PanelAlignmentWorkflowIntegrationTests(unittest.TestCase):
         readme_en = self.read("skills/nature-figure/README_EN.md")
         evals = json.loads(self.read("skills/nature-figure/evals/evals.json"))
 
-        self.assertIn("version: 2.8.0", manifest)
+        self.assertIn("version: 2.9.0", manifest)
         for relative, text in (
             ("SKILL.md", skill),
             ("python.md", python_backend),

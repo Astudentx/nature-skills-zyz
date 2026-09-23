@@ -2,9 +2,10 @@
 name: nature-figure
 description: >-
   Create, revise, audit, and export manuscript scientific figures in Python or R.
-  Use for 论文配图、科研绘图、多面板图 and submission-ready plots, or explicitly
-  requested AI-generated graphical abstracts and mechanism schematics. Not for
-  interactive dashboards, data cleaning, or statistics-only analysis.
+  Also organize R analysis projects, scripts, and input/output paths using the
+  R-ZYZ conventions. Use for 论文配图、科研绘图、多面板图, R项目管理、R脚本命名、R分析目录,
+  or explicitly requested AI-generated graphical abstracts and mechanism schematics.
+  Not for interactive dashboards or statistics-only reporting.
 ---
 
 # Nature Figure Making — Router
@@ -12,6 +13,16 @@ description: >-
 ## Routing protocol
 
 For a new task, load the core and matching resources below. Reuse already loaded guidance on follow-ups; load more only when the task needs it.
+
+### R project management route
+
+For an R task involving project layout, script naming, input paths, or result
+directories, read [references/r-project-management.md](references/r-project-management.md).
+If the task is only R project organization or script/input/output management,
+apply that reference and stop here: the plotting backend preference, figure
+contract, rendering, and figure QA do not apply. For an R figure task, apply
+the project reference alongside the normal R figure workflow. Preserve the
+existing project's conventions when they differ from the new-project defaults.
 
 ### 0. Check for graphical-abstract and AI-schematic routes
 
@@ -73,10 +84,10 @@ Apply the loaded material in this order:
 3. Default stance (`core/stance.md`) — archetype-first composition, hero panel, restrained palette, statistics/integrity as part of the figure.
 4. Backend fragment — the exclusive Python or R quick-start and execution rule.
 5. Template adaptation — when reusing built-in original examples, licensed external material, or user-provided plotting code, load `references/asset-adaptation.md` before mapping data or changing the script.
-6. Rendered QA and delivery preflight — load `references/qa-contract.md`, run the render-time panel-alignment gate for every multi-panel figure, `scripts/validate_figure.py` on the plotting source, `scripts/audit_pdf_text.py` on the exported PDF, and `scripts/audit_figure_collisions.py` on the same final PDF. Then inspect every panel and the complete figure at final physical size. Automated checks do not replace the panel-by-panel uncertainty, salience, spacing, and ambiguity audit.
+6. Strict QA and delivery preflight — only when the user requests strict QA, submission readiness, or a final audit, load `references/qa-contract.md`, run the render-time panel-alignment gate, `scripts/validate_figure.py` on the plotting source, `scripts/audit_pdf_text.py` on the exported PDF, and `scripts/audit_figure_collisions.py` on the same final PDF. Then inspect every panel and the complete figure at final physical size. Routine figures default to their requested delivery format without QA sidecars.
 
-For every figure containing two or more comparable panels, measure the **final
-rendered plot-area rectangles** before export and preserve the alignment JSON.
+When strict QA is requested for a figure containing two or more comparable
+panels, measure the **final rendered plot-area rectangles** before export and preserve the alignment JSON.
 Python figures must call `require_matplotlib_panel_alignment()` from
 `scripts/audit_panel_alignment.py` after the final layout draw. R/patchwork
 figures must source `scripts/panel_alignment.R`, write the patchwork layout
@@ -94,8 +105,8 @@ free-positioned hero panels, insets and colorbars may be excluded only through
 explicit comparable groups or a recorded exemption with a reason. Do not
 weaken the global tolerance to hide one intentional exception.
 
-After every generated or revised Python/R scientific figure, export the final
-PDF and run the collision audit again; this is mandatory after any change to
+For strict QA or submission-ready delivery, export the final PDF and run the
+collision audit again after any change to
 data geometry, text, fonts, legends, annotations, axes, error bars, panel size
 or layout, not only at final submission. Use:
 

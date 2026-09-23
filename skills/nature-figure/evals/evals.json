@@ -138,9 +138,9 @@
       "files": []
     },
     {
-      "id": "rendered-collision-audit-is-mandatory",
-      "prompt": "I changed the legend font and moved two annotations in this R-generated Nature figure. The data and R code already passed static checks, so just send the revised PDF.",
-      "expected_output": "Because text and layout changed, the assistant must rerun audit_figure_collisions.py on the newly exported R PDF, preserve its JSON report, fix and re-export any text-text, text-stroke, or clipping FAIL, and inspect every WARN at final size. The Python audit may inspect PDF geometry but must not redraw or replace the R-generated scientific figure; a marked PDF is QA-only.",
+      "id": "rendered-collision-audit-for-strict-delivery",
+      "prompt": "I changed the legend font and moved two annotations in this R-generated Nature figure. Run strict submission-ready QA and send the revised PDF.",
+      "expected_output": "Because strict submission-ready QA was requested and text and layout changed, the assistant must rerun audit_figure_collisions.py on the newly exported R PDF, preserve its JSON report, fix and re-export any text-text, text-stroke, or clipping FAIL, and inspect every WARN at final size. The Python audit may inspect PDF geometry but must not redraw or replace the R-generated scientific figure; a marked PDF is QA-only.",
       "assertions": [
         {
           "name": "rerun_after_layout_change",

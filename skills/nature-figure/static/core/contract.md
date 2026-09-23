@@ -44,7 +44,7 @@ Plan figures by scientific claims, not by source tables. Do not turn each table 
 2. **Evidence chain**: map each planned panel to one distinct inferential role in that claim, and drop, merge, or demote panels that only redraw another panel's evidence or repeat it under a secondary metric.
 3. **Archetype**: classify the figure as `quantitative grid`, `schematic-led composite`, `image plate + quant`, or `asymmetric mixed-modality figure`.
 4. **Backend**: use the explicit or saved Python/R track exclusively for all figure drawing, previewing, exporting, and visual QA. Do not cross-render with the other language.
-5. **Journal/export contract**: set final dimensions, a 5 pt floor for every rendered glyph, editable text, source data, statistics, image-integrity notes, export formats, a blocking multi-panel alignment gate, and automatic rendered collision QA before styling.
+5. **Journal/export contract**: set final dimensions, editable text, source data, statistics, image-integrity notes, and export formats. Add a blocking multi-panel alignment gate and rendered collision QA only for strict QA or submission-ready delivery.
 
 The highest-priority rule is: **the chart serves the scientific logic**. Aesthetic polish, template matching, and complex layout are subordinate to making the core conclusion clear, defensible, and reviewable.
 

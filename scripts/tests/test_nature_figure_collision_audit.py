@@ -174,7 +174,7 @@ class CollisionPdfEndToEndTests(unittest.TestCase):
 
 
 class CollisionWorkflowIntegrationTests(unittest.TestCase):
-    def test_every_python_or_r_figure_routes_through_collision_audit(self) -> None:
+    def test_strict_python_or_r_figure_routes_through_collision_audit(self) -> None:
         skill = read("skills/nature-figure/SKILL.md")
         python_backend = read("skills/nature-figure/static/fragments/backend/python.md")
         r_backend = read("skills/nature-figure/static/fragments/backend/r.md")
@@ -188,7 +188,8 @@ class CollisionWorkflowIntegrationTests(unittest.TestCase):
         ):
             self.assertIn("audit_figure_collisions.py", text, relative)
 
-        self.assertIn("After every generated or revised Python/R scientific figure", skill)
+        self.assertIn("For strict QA or submission-ready delivery", skill)
+        self.assertNotIn("After every generated or revised Python/R scientific figure", skill)
         self.assertIn("FIX BEFORE DELIVERY", qa)
         self.assertIn("REVIEW REQUIRED", qa)
 
@@ -200,13 +201,13 @@ class CollisionWorkflowIntegrationTests(unittest.TestCase):
         evals = json.loads(read("skills/nature-figure/evals/evals.json"))
         installer = read("scripts/update-codex-skills.sh")
 
-        self.assertIn("version: 2.8.0", manifest)
+        self.assertIn("version: 2.9.0", manifest)
         self.assertIn("PyMuPDF", requirements)
         for text in (readme_zh, readme_en):
             self.assertIn("audit_figure_collisions.py", text)
         self.assertIn("nature-figure/requirements.txt", installer)
         ids = {case["id"] for case in evals["evals"]}
-        self.assertIn("rendered-collision-audit-is-mandatory", ids)
+        self.assertIn("rendered-collision-audit-for-strict-delivery", ids)
 
 
 if __name__ == "__main__":

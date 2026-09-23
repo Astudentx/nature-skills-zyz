@@ -1,6 +1,6 @@
 # Default operating stance
 
-The older Python/matplotlib rules in this skill remain valid. The skill also supports R, especially `ggplot2 + patchwork + ComplexHeatmap + ggrepel + svglite/cairo_pdf + ragg`.
+The older Python/matplotlib rules in this skill remain valid. The skill also supports R, especially `ggplot2 + patchwork + ComplexHeatmap + ggrepel + grDevices::pdf + ragg`; use Cairo only for an explicit, verified need.
 
 ## Color policy
 
@@ -18,7 +18,7 @@ Prefer **unified method families across all panels** over maximal hue separation
 - Treat statistics, `n`, error-bar definitions, source-data traceability, and image-integrity notes as part of the figure, not as optional caption cleanup.
 - When panels show comparable seed/fold/split aggregates, use the same uncertainty definition in every comparable panel or state why a panel is exempt.
 - Preserve canonical model capitalization in display labels. Legend entries use display-style initial capitalization; prose follows normal sentence grammar. Never apply blind `.title()` transformations to names such as `XGBoost`, `DeepSeek`, `GPT-5.2`, or `RF`.
-- Require the render-time alignment gate for every multi-panel layout, followed by a final-size, panel-by-panel visual inspection. Source validation cannot prove color hierarchy, label clearance, legend spacing, or complete uncertainty coverage.
+- For strict QA or submission-ready figures, require the render-time alignment gate followed by a final-size, panel-by-panel visual inspection. Routine figures do not create alignment sidecars by default.
 - When the user asks for broad `Nature` style rather than ML/NMI-specific style, read `references/nature-2026-observations.md` before choosing layout.
 - When the user references `figures4papers` or the older `scientific-figure-making` skill, treat this skill as the successor and open `references/demos.md` for the third-party demo map, copyright boundary, and original reimplementation guidance.
 

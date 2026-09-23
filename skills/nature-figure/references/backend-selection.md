@@ -77,7 +77,7 @@ libraries, open graphics devices, save image/vector files, or decide visual layo
 - Direct labels: `ggrepel`
 - Survival/clinical: `survival`, `survminer`, `forestplot`, `ggplot2`
 - Single-cell/omics: `Seurat`, `SingleCellExperiment`, `ComplexHeatmap`, `ggtree`
-- Export: `svglite`, `grDevices::cairo_pdf`, `ragg`
+- Export: `ggplot2::ggsave(..., device = grDevices::pdf, useDingbats = FALSE)` by default; `svglite`, Cairo, or `ragg` only for an explicit format need
 
 ### Python
 

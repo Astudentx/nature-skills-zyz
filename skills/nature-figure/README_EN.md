@@ -7,6 +7,7 @@
 ## What To Use It For
 
 - Generate Python / R plotting scripts and editable figures from data, legends, or manuscript claims.
+- Organize R analysis directories, ordered scripts, and input/output paths; project-management-only requests use this skill without the figure workflow.
 - Redraw existing figures into clearer multi-panel manuscript figures.
 - Plan multi-panel evidence chains around the default that one figure answers one Results-level scientific question, with panels serving different inferential roles such as primary evidence, control, orthogonal validation, perturbation, mechanism, or boundary rather than merely redrawing the same result under new metrics.
 - Plan Figure 1, mechanism diagrams, workflows, graphical abstracts, or supplementary figures.
@@ -61,6 +62,7 @@ Start with a figure contract rather than a template:
 
 ## Built-In References
 
+- `references/r-project-management.md`: R-ZYZ project layout, script names, and input/output paths; `scripts/r_project_paths.R` and `scripts/create_rproj.R` provide optional helpers.
 - `references/api.md`: Python palette, style, and plotting-helper conventions.
 - `references/asset-adaptation.md`: semantic matching, field mapping, and data-integrity rules for templates.
 - `references/multipanel-evidence-architecture.md`: planning and audit from Results-level question to panel evidence roles, within-figure closure, cross-figure claim escalation, and main-figure/Extended-Data/SI placement.

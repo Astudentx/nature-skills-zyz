@@ -20,6 +20,38 @@
   rows[order(rows$t, rows$l), , drop = FALSE]
 }
 
+.nature_alignment_resolve_units <- function(units, total_pt, dimension) {
+  if (!is.numeric(total_pt) || length(total_pt) != 1 || !is.finite(total_pt) || total_pt <= 0) {
+    stop("Panel-alignment device dimension must be a positive finite point value", call. = FALSE)
+  }
+  unit_types <- grid::unitType(units)
+  is_null <- unit_types == "null"
+  converted <- if (dimension == "width") {
+    grid::convertWidth(units, "pt", valueOnly = TRUE)
+  } else {
+    grid::convertHeight(units, "pt", valueOnly = TRUE)
+  }
+  if (any(!is.finite(converted))) {
+    stop("Patchwork panel dimensions could not be converted to physical points", call. = FALSE)
+  }
+
+  # grid converts flexible `null` units to zero outside its parent viewport.
+  # Allocate the final device space left after fixed grob units in proportion
+  # to their null weights, which is how the patchwork gtable resolves them.
+  if (any(is_null)) {
+    null_weights <- as.numeric(units[is_null])
+    if (any(!is.finite(null_weights)) || sum(null_weights) <= 0) {
+      stop("Patchwork null-unit weights are invalid", call. = FALSE)
+    }
+    remaining_pt <- total_pt - sum(converted[!is_null])
+    if (!is.finite(remaining_pt) || remaining_pt <= 0) {
+      stop("Patchwork fixed grobs leave no physical space for panel cells", call. = FALSE)
+    }
+    converted[is_null] <- remaining_pt * null_weights / sum(null_weights)
+  }
+  converted
+}
+
 write_patchwork_panel_layout <- function(
   plot,
   manifest_path,
@@ -67,11 +99,8 @@ write_patchwork_panel_layout <- function(
   grid::grid.draw(grob)
   grid::grid.force()
 
-  widths_pt <- grid::convertWidth(grob$widths, "pt", valueOnly = TRUE)
-  heights_pt <- grid::convertHeight(grob$heights, "pt", valueOnly = TRUE)
-  if (any(!is.finite(widths_pt)) || any(!is.finite(heights_pt))) {
-    stop("Patchwork panel dimensions could not be converted to physical points", call. = FALSE)
-  }
+  widths_pt <- .nature_alignment_resolve_units(grob$widths, width_in * 72, "width")
+  heights_pt <- .nature_alignment_resolve_units(grob$heights, height_in * 72, "height")
   x_edges <- c(0, cumsum(widths_pt))
   top_edges <- c(0, cumsum(heights_pt))
   total_height_pt <- sum(heights_pt)

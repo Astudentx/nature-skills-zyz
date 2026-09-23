@@ -1,4 +1,4 @@
-# QA Contract
+# Strict QA Contract
 
 ## Contents
 
@@ -18,8 +18,10 @@
 - [Export checks](#export-checks)
 
 
-Use this before final delivery, before a revision package, and whenever the figure
-contains microscopy, blots, gels, clinical subgroup analysis, or statistical claims.
+Use this when the user requests strict QA, submission-ready or final delivery,
+a revision package, or an integrity audit for microscopy, blots, gels, clinical
+subgroup analysis, or statistical claims. Routine figure generation does not
+load this contract or create its QA sidecars by default.
 Journal rules change, so verify the latest target journal author guide for final
 submission. The values below are conservative defaults for Nature-family style work.
 For the flagship journal Nature, load `nature-article-requirements.md` and use
@@ -47,7 +49,7 @@ its stage-specific main-figure, Extended Data and legend contracts.
 | Rendered glyph floor | Every PDF text run, including math superscripts/subscripts, is at least 5 pt |
 | Panel labels | Lowercase, bold, near top-left, typically 8 pt at final size |
 | Editable text | SVG/PDF text remains editable; no outlined text unless unavoidable for special symbols |
-| Font | Arial/Helvetica/sans-serif fallback is used consistently |
+| Font | R uses the active graphics-device default unless the user explicitly requests a typeface; a named font is then used consistently and verified in the final PDF |
 | Color | No rainbow color maps; red/green is not the only encoding; grayscale print remains interpretable |
 | Legend strategy | Shared or direct labels where possible; no repeated redundant legends |
 | Display terminology | Legend labels use display-style initial capitalization and preserve canonical model names |
@@ -149,7 +151,7 @@ Treat the result as a deterministic source audit, not as evidence that the analy
 
 ## Automatic multi-panel alignment gate
 
-Run the gate for every figure with at least two comparable panels, after the
+Within a strict QA run, run the gate for every figure with at least two comparable panels, after the
 final layout engine has drawn fonts, legends, colorbars and constrained/tight
 layout, and before exporting submission files. Rerun it after any change that
 can affect panel geometry. A single-panel figure is `not applicable`; a
@@ -231,8 +233,8 @@ should be omitted from unrelated groups or carry a specific exemption reason.
 
 ## Automatic rendered collision audit
 
-Run `audit_figure_collisions.py` after **every generated figure and every
-revision that can change layout**, including edits to text, fonts, legend,
+Within a strict QA run, run `audit_figure_collisions.py` after **every generated
+figure and every revision that can change layout**, including edits to text, fonts, legend,
 annotations, axes, data, uncertainty, panel size or arrangement. Do not reuse a
 report from an earlier render. Preserve the JSON report with the delivery QA;
 the marked PDF is diagnostic only.
@@ -327,18 +329,16 @@ fig.savefig("figure.tiff", dpi=600, bbox_inches="tight")
 ### R
 
 ```r
-svglite::svglite("figure.svg", width = width_mm / 25.4, height = height_mm / 25.4)
-print(plot)
-dev.off()
-
-grDevices::cairo_pdf("figure.pdf", width = width_mm / 25.4, height = height_mm / 25.4, family = "Arial")
-print(plot)
-dev.off()
-
-ragg::agg_tiff("figure.tiff", width = width_mm / 25.4, height = height_mm / 25.4, units = "in", res = 600)
-print(plot)
-dev.off()
+ggplot2::ggsave(
+  filename = "figure.pdf", plot = plot, device = grDevices::pdf,
+  width = width_mm, height = height_mm, units = "mm", bg = "white",
+  useDingbats = FALSE
+)
 ```
 
-Open the SVG/PDF after export and verify that text can be selected, labels do not
-overlap, and the figure still reads at final printed size.
+The default R delivery export is one PDF. Add SVG, TIFF, PNG, or another format
+only when the user or target journal explicitly requires it. Open the PDF after
+export and verify that text can be selected, labels do not overlap, and the
+figure still reads at final printed size. Do not use Cairo by default on macOS:
+its font matching and embedding can create uneven spacing even with the default
+font family.

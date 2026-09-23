@@ -16,6 +16,10 @@ Use this when the user chooses R, brings R data/scripts, or asks to reuse the lo
 R plotting templates. The R track should still follow the same figure contract:
 claim first, evidence hierarchy second, plotting code third.
 
+For an R analysis project, also read [r-project-management.md](r-project-management.md)
+for project layout, script naming, and input/output paths. Keep the figure
+theme, export, and QA rules in this R figure workflow.
+
 ## R-only execution rule
 
 When the user has selected R, do all figure drawing, previewing, exporting, and
@@ -38,9 +42,20 @@ image/vector outputs or alter visual layout.
 | Rich omics heatmaps | `ComplexHeatmap`, `circlize`, `grid` |
 | Survival and clinical subgroup plots | `survival`, `survminer`, `forestplot`, `ggplot2` |
 | Circular/genome plots | `circlize`, `ggtree`, `gggenes`, domain-specific packages |
-| Export | `svglite`, `grDevices::cairo_pdf`, `ragg` |
+| Export | `ggplot2::ggsave(..., device = grDevices::pdf, useDingbats = FALSE)`; add `svglite`, `ragg`, or Cairo only when the user explicitly requests a non-default output need |
 
 ## Contract scaffold
+
+### R font policy
+
+Unless the user explicitly requests a typeface, do not set `base_family`,
+`family`, or a device-specific font option. Let the active R graphics device
+select its default font. The default PDF export uses `grDevices::pdf()` with
+`useDingbats = FALSE`, rather than Cairo: Cairo font matching and embedding can
+cause uneven kerning or broken-looking words in macOS PDF Preview and
+rasterization even when no font family is supplied. If the user requires a
+named typeface or Cairo specifically, apply it deliberately and verify the
+exported PDF on the target system.
 
 ```r
 library(ggplot2)
@@ -57,54 +72,68 @@ palette_contract <- c(
   accent_orange = "#E28E2C"
 )
 
-theme_nature_contract <- function(base_size = 6.5, base_family = "Arial") {
-  theme_classic(base_size = base_size, base_family = base_family) +
+theme_nature_quant <- function(base_size = 8) {
+  # Use only for standard Cartesian plots: bars, scatterplots, lines, and boxplots.
+  theme_bw(base_size = base_size) +
     theme(
-      axis.line = element_line(linewidth = 0.35, colour = "black"),
       axis.ticks = element_line(linewidth = 0.35, colour = "black"),
-      axis.title = element_text(size = base_size),
+      axis.title = element_text(size = base_size, face = "bold"),
       axis.text = element_text(size = base_size - 0.5),
-      legend.title = element_text(size = base_size - 0.3),
+      legend.title = element_text(size = base_size - 0.3, face = "bold"),
       legend.text = element_text(size = base_size - 0.7),
       strip.text = element_text(size = base_size - 0.3, face = "bold"),
-      plot.title = element_text(size = base_size + 0.5, face = "bold"),
-      panel.grid = element_blank()
+      plot.title = element_text(size = 7.5, face = "bold"),
+      panel.grid.minor = element_blank()
     )
 }
 
-theme_set(theme_nature_contract())
-
-save_pub_r <- function(plot, filename, width_mm = 183, height_mm = 120, dpi = 600) {
-  w <- width_mm / 25.4
-  h <- height_mm / 25.4
-
-  if (inherits(plot, "patchwork")) {
-    require_patchwork_panel_alignment(
-      plot,
-      manifest_path = paste0(filename, ".alignment-layout.json"),
-      report_path = paste0(filename, ".alignment.json"),
-      overlay_svg = paste0(filename, ".alignment.svg"),
-      width_in = w,
-      height_in = h,
-      tolerance_pt = 1.5,
-      gutter_tolerance_pt = 1.5,
-      strict = TRUE
+theme_nature_void <- function(base_size = 8) {
+  # Use only for axis-free plots: networks, pie/donut charts, and image-led panels.
+  theme_void(base_size = base_size) +
+    theme(
+      legend.title = element_text(size = base_size - 0.3, face = "bold"),
+      legend.text = element_text(size = base_size - 0.7),
+      strip.text = element_text(size = base_size - 0.3, face = "bold"),
+      plot.title = element_text(size = 7.5, face = "bold")
     )
-  }
-
-  svglite::svglite(paste0(filename, ".svg"), width = w, height = h)
-  print(plot)
-  dev.off()
-
-  grDevices::cairo_pdf(paste0(filename, ".pdf"), width = w, height = h, family = "Arial")
-  print(plot)
-  dev.off()
-
-  ragg::agg_tiff(paste0(filename, ".tiff"), width = w, height = h, units = "in", res = dpi)
-  print(plot)
-  dev.off()
 }
+
+ggplot2::ggsave(
+  filename = "figure.pdf", plot = fig, device = grDevices::pdf,
+  width = 183, height = 120, units = "mm", bg = "white",
+  useDingbats = FALSE
+)
 ```
+
+Write one PDF by default with an explicit `ggplot2::ggsave()` call. Generate
+PNG, TIFF, SVG, or alignment QA files only when the user explicitly requests
+that format or a strict submission-ready audit. For strict patchwork QA, call
+`require_patchwork_panel_alignment()` immediately before `ggsave()`; its
+JSON/SVG outputs are QA diagnostics, not delivery figures.
+
+Do not use `theme_set()`: it would apply one coordinate-plot theme to every
+subsequent ggplot. Apply `theme_nature_quant()` explicitly to standard X/Y
+Cartesian plots (bars, scatterplots, lines, boxplots, violins, volcano plots
+and similar rectangular panels). Apply `theme_nature_void()` only to axis-free
+network and pie/donut plots. Maps, trees, heatmaps and image-led panels retain
+their specialized themes. Use a bold `plot.title`, axis titles, and legend
+titles by default. Do not add a `labs(subtitle = ...)` line unless the user
+explicitly asks for explanatory text below the title; it is not a default
+manuscript-figure element.
+
+For standard Cartesian plots, retain both X and Y axis titles by default. A
+categorical X axis should still name its variable (for example, `Species` or
+`Treatment`); use `x = NULL` only when the user explicitly requests it or the
+plot is truly axis-free.
+
+### Default physical size and text hierarchy
+
+Choose `120 × 90 mm` for one standard plot and `183 × 120 mm` for a patchwork
+multi-panel figure unless the journal or layout requires another size. The theme
+starts at `8 pt`, and uses `7.5 pt` for a bold plot title. This makes the title
+legible without enlarging the plot into a double-column canvas unnecessarily.
+Set `width_mm` and `height_mm` explicitly when a journal specification or a
+particular panel layout requires another final size.
 
 ## Panel labels in R
 
@@ -115,6 +144,12 @@ fig <- (p_a | p_b) / (p_c | p_d) +
   plot_annotation(tag_levels = "a") &
   theme(plot.tag = element_text(size = 8, face = "bold"))
 ```
+
+Do not add an overall plotted title with `plot_annotation(title = ...)` by
+default. The manuscript figure legend—not a redundant title inside the figure—
+should provide that framing. Keep the lowercase panel tags (`a`, `b`, `c`, …)
+bold; use a manual label only when dark image plates or inset geometry make
+patchwork tags misalign.
 
 Use manual labels only when dark image plates or inset geometry make patchwork tags
 misalign.
@@ -200,8 +235,9 @@ require_patchwork_panel_alignment(
 
 Every exemption must name the panel, the exact check and the reason. Do not
 increase the global tolerance to hide an inset, colorbar, legend-only cell or
-hero panel. A non-zero audit status stops the R delivery script. Preserve both
-the measured layout manifest and audit JSON; the alignment SVG is QA-only.
+hero panel. When strict QA is requested, a non-zero audit status stops the R
+delivery script. Preserve the measured layout manifest and audit JSON only for
+that QA run; the alignment SVG is QA-only.
 
 ## ComplexHeatmap export
 
@@ -212,7 +248,7 @@ the graphics device, drawing, then closing it.
 library(ComplexHeatmap)
 library(circlize)
 
-pdf("heatmap.pdf", width = 7.2, height = 4.8, family = "Arial")
+pdf("heatmap.pdf", width = 7.2, height = 4.8)
 draw(ht, heatmap_legend_side = "right", annotation_legend_side = "right")
 dev.off()
 
@@ -228,7 +264,7 @@ The local R materials are examples, not final style. When reusing them:
 1. Inspect only the nearest template folder.
 2. Keep useful data wrangling, statistics, and geoms.
 3. Replace ad hoc colors, oversized fonts, dense legends, and PNG-only export.
-4. Rebuild the final script around `theme_nature_contract()` and `save_pub_r()`.
+4. Rebuild standard Cartesian plots around `theme_nature_quant()` and an explicit `ggplot2::ggsave()` call; retain a specialized theme for non-Cartesian plots.
 5. Add source-data output if the figure is manuscript-facing.
 
 Open `references/r-template-index.md` for the local template atlas.

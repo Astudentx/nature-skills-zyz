@@ -7,6 +7,7 @@
 ## 适合用它做什么
 
 - 根据数据、图注或论文结论生成 Python / R 绘图脚本和可编辑图件。
+- 为 R 分析项目组织目录、编号脚本及输入/输出路径；纯项目管理任务可直接使用此 skill，不触发绘图流程。
 - 将已有图件重画为更清楚的多面板论文 figure。
 - 按“一张 Figure 回答一个 Results 级科学问题”的默认逻辑规划多面板证据链，让各 panel 分别承担主证据、control、正交验证、扰动、机制或边界等不同推理角色，而不是只把同一结果换指标重画。
 - 规划 Figure 1、机制图、workflow、graphical abstract 或补充图。
@@ -61,6 +62,7 @@
 
 ## 内置参考
 
+- `references/r-project-management.md`：R-ZYZ 项目目录、脚本命名、输入/输出路径约定；`scripts/r_project_paths.R` 和 `scripts/create_rproj.R` 提供辅助函数。
 - `references/api.md`：Python 配色、样式和绘图 helper 约定。
 - `references/asset-adaptation.md`：模板语义匹配、字段映射和数据完整性规则。
 - `references/multipanel-evidence-architecture.md`：从 Results 级问题到 panel 证据角色、图内闭环、跨 Figure claim escalation 和主图/Extended Data/SI 去向的规划与审计。

@@ -112,14 +112,34 @@ def check_syntax(source: str, backend: str) -> Finding:
 
 
 def check_font_family(source: str, backend: str) -> Finding:
+    if backend == "r":
+        forced_families = regex_hits(
+            [
+                r"base_family\s*=\s*['\"][^'\"]+['\"]",
+                r"(?:cairo_pdf|pdf)\s*\([^)]*?\bfamily\s*=\s*['\"][^'\"]+['\"]",
+            ],
+            source,
+        )
+        if forced_families:
+            return finding(
+                "FONT-FAMILY",
+                "WARN",
+                "R font family is explicitly configured; retain it only when the user requested that typeface and verify the exported PDF",
+                forced_families,
+            )
+        return finding(
+            "FONT-FAMILY",
+            "PASS",
+            "R source leaves font selection to the active graphics-device default",
+        )
+
     families = regex_hits(
         [r"Arial", r"Helvetica", r"Liberation Sans", r"sans-serif", r"base_family\s*=\s*['\"]sans['\"]"],
         source,
     )
     if families:
         return finding("FONT-FAMILY", "PASS", "A publication-safe sans-serif family is configured", families)
-    label = "matplotlib rcParams" if backend == "python" else "ggplot/theme or graphics device"
-    return finding("FONT-FAMILY", "FAIL", f"No explicit publication-safe font family found in {label}")
+    return finding("FONT-FAMILY", "FAIL", "No explicit publication-safe font family found in matplotlib rcParams")
 
 
 def explicit_font_sizes(source: str) -> list[float]:
@@ -413,30 +433,31 @@ def check_editable_text(source: str, backend: str) -> Finding:
             missing.append("pdf.fonttype=42")
         return finding("EDITABLE-TEXT", "FAIL", "Missing editable-text settings", missing)
 
-    has_svg = bool(re.search(r"(?:svglite::)?svglite\s*\(", source))
-    has_pdf = bool(re.search(r"(?:grDevices::)?cairo_pdf\s*\(", source))
-    if has_svg and has_pdf:
-        return finding("EDITABLE-TEXT", "PASS", "svglite and cairo_pdf editable-text devices are configured")
-    missing = []
-    if not has_svg:
-        missing.append("svglite")
-    if not has_pdf:
-        missing.append("cairo_pdf")
-    return finding("EDITABLE-TEXT", "FAIL", "Missing preferred editable-vector devices", missing)
+    has_pdf = bool(
+        re.search(r"(?:grDevices::)?(?:cairo_pdf|pdf)\s*\(", source)
+        or re.search(r"device\s*=\s*(?:grDevices::)?(?:cairo_pdf|pdf)\b", source)
+    )
+    if has_pdf:
+        return finding("EDITABLE-TEXT", "PASS", "R PDF editable-text device is configured")
+    return finding("EDITABLE-TEXT", "FAIL", "Missing R PDF editable-text device", ["grDevices::pdf or cairo_pdf"])
 
 
-def check_vector_exports(source: str, _backend: str) -> Finding:
+def check_vector_exports(source: str, backend: str) -> Finding:
     has_svg = bool(re.search(r"\.svg\b|svglite\s*\(", source, re.IGNORECASE))
     has_pdf = bool(re.search(r"\.pdf\b|cairo_pdf\s*\(|\bpdf\s*\(", source, re.IGNORECASE))
+    if backend == "r" and has_pdf:
+        return finding("EXPORT-VECTOR", "PASS", "R PDF-default export is present")
     if has_svg and has_pdf:
         return finding("EXPORT-VECTOR", "PASS", "Both SVG and PDF exports are present")
     missing = [name for name, present in (("SVG", has_svg), ("PDF", has_pdf)) if not present]
     return finding("EXPORT-VECTOR", "FAIL", f"Missing required vector export: {', '.join(missing)}")
 
 
-def check_raster_exports(source: str, _backend: str) -> Finding:
+def check_raster_exports(source: str, backend: str) -> Finding:
     has_tiff = bool(re.search(r"\.tiff?\b|agg_tiff\s*\(|\btiff\s*\(", source, re.IGNORECASE))
     has_png = bool(re.search(r"\.png\b|agg_png\s*\(|\bpng\s*\(", source, re.IGNORECASE))
+    if backend == "r" and not has_tiff and not has_png:
+        return finding("EXPORT-RASTER", "PASS", "No raster export required by R's PDF-default policy")
     if has_tiff:
         return finding("EXPORT-RASTER", "PASS", "TIFF raster export is present")
     if has_png:
@@ -444,12 +465,14 @@ def check_raster_exports(source: str, _backend: str) -> Finding:
     return finding("EXPORT-RASTER", "FAIL", "No TIFF or PNG raster export found")
 
 
-def check_resolution(source: str, _backend: str) -> Finding:
+def check_resolution(source: str, backend: str) -> Finding:
     values = [
         int(value)
         for value in re.findall(r"(?:dpi|res)\s*[:=]\s*(\d+)", source, re.IGNORECASE)
     ]
     if not values:
+        if backend == "r":
+            return finding("RASTER-DPI", "PASS", "No raster DPI required by R's PDF-default policy")
         return finding("RASTER-DPI", "WARN", "No explicit raster DPI/resolution found")
     below_minimum = sorted({value for value in values if value < 300})
     if below_minimum:
@@ -481,12 +504,12 @@ def check_dimensions(source: str, backend: str) -> Finding:
     if not widths:
         return finding("FINAL-WIDTH", "WARN", "No static final width detected; verify the target journal's current specification")
     width = widths[0]
-    if abs(width - 89) <= 4 or abs(width - 183) <= 6:
-        return finding("FINAL-WIDTH", "PASS", f"Detected width {width:.1f} mm matches a common journal column width")
+    if abs(width - 89) <= 4 or abs(width - 120) <= 5 or abs(width - 183) <= 6:
+        return finding("FINAL-WIDTH", "PASS", f"Detected width {width:.1f} mm matches a configured figure width")
     return finding(
         "FINAL-WIDTH",
         "WARN",
-        f"Detected width {width:.1f} mm is not near the common 89/183 mm defaults; verify the target journal",
+        f"Detected width {width:.1f} mm is not near the configured 89/120/183 mm widths; verify the target journal",
     )
 
 
@@ -626,8 +649,8 @@ def check_panel_alignment_gate(source: str, backend: str) -> Finding:
     if signals and not gate:
         return finding(
             "PANEL-ALIGNMENT-GATE",
-            "FAIL",
-            "Multi-panel layout detected without the mandatory render-time panel-alignment gate",
+            "PASS",
+            "Multi-panel layout detected; render-time panel-alignment QA is optional by default and required only for strict QA or submission-ready delivery",
             signals,
         )
     if gate:
@@ -732,16 +755,11 @@ fig.savefig("figure.tiff", dpi=600, bbox_inches="tight")
     good_r = '''
 library(ggplot2)
 width_mm <- 183
-p <- ggplot(df, aes(x, y)) + theme_classic(base_size = 7, base_family = "Arial")
-svglite::svglite("figure.svg", width = width_mm / 25.4, height = 4)
-print(p)
-dev.off()
-grDevices::cairo_pdf("figure.pdf", width = width_mm / 25.4, height = 4, family = "Arial")
-print(p)
-dev.off()
-ragg::agg_tiff("figure.tiff", width = width_mm / 25.4, height = 4, units = "in", res = 600)
-print(p)
-dev.off()
+p <- ggplot(df, aes(x, y)) + theme_bw(base_size = 7)
+ggplot2::ggsave(
+  filename = "figure.pdf", plot = p, device = grDevices::pdf,
+  width = width_mm, height = 100, units = "mm", bg = "white", useDingbats = FALSE
+)
 '''
     bad_python = '''
 import numpy as np
@@ -769,6 +787,14 @@ LABEL_Y = 96.4
     good_r_findings = validate_source(good_r, "r")
     good_r_failures = [row for row in good_r_findings if row.level == "FAIL"]
     assert not good_r_failures, good_r_failures
+    assert {row.check_id: row for row in good_r_findings}["FONT-FAMILY"].level == "PASS"
+
+    forced_r_font = good_r.replace(
+        'theme_bw(base_size = 7)',
+        'theme_bw(base_size = 7, base_family = "Arial")',
+    )
+    forced_r = {row.check_id: row for row in validate_source(forced_r_font, "r")}
+    assert forced_r["FONT-FAMILY"].level == "WARN", forced_r["FONT-FAMILY"]
 
     bad = {row.check_id: row for row in validate_source(bad_python, "python")}
     for check_id in ("FONT-FAMILY", "FONT-SIZE", "COLOR-MAP", "EDITABLE-TEXT", "EXPORT-VECTOR", "RASTER-DPI"):

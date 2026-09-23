@@ -1,5 +1,5 @@
 name: nature-figure
-version: 2.8.0
+version: 2.9.0
 description: >
   Declarative manifest for the static/dynamic split. SKILL.md uses this to
   decide which fragments to load for a given figure request. The main axis is
@@ -14,6 +14,16 @@ always_load:
   - static/core/stance.md
 
 routes:
+  r_project_management:
+    detect: |
+      Use for R project layout, ordered script naming, source-data placement,
+      or script-specific input/output paths, including R figure tasks in an
+      existing R analysis project. Pure project-management work skips the
+      plotting backend gate and figure QA.
+    reference: references/r-project-management.md
+    scripts:
+      - scripts/r_project_paths.R
+      - scripts/create_rproj.R
   graphical_abstract_workflow:
     detect: |
       Use this route whenever AI assists the planning, generation, revision, or
@@ -64,6 +74,8 @@ axes:
 
 references:
   on_demand:
+    - condition: an R task needs project layout, script naming, or input/output path management
+      path: references/r-project-management.md
     - condition: convert a user request into core conclusion, evidence hierarchy, panel map, and review-risk checks
       path: references/figure-contract.md
     - condition: plan, restructure, or audit a multi-panel manuscript figure; decide panel roles or main-versus-Extended-Data placement; or align figure order with a Results evidence chain
@@ -76,7 +88,7 @@ references:
       path: references/r-template-index.md
     - condition: reuse or adapt a bundled example, plotting script, preview image, or user-provided template against new data
       path: references/asset-adaptation.md
-    - condition: every generated or revised Python/R scientific figure, multi-panel alignment gate, rendered PDF collision audit, final delivery, revision package, rendered PDF text audit, panel-by-panel visual QA, microscopy/blot figure, or journal-specific audit
+    - condition: strict QA, submission-ready or final audit, revision package, rendered PDF text or collision audit, panel-by-panel visual QA, microscopy/blot integrity audit, or journal-specific audit
       path: references/qa-contract.md
     - condition: target is the flagship journal Nature, or exact initial-versus-production main/Extended Data figure and legend requirements are needed
       path: references/nature-article-requirements.md
